@@ -5,372 +5,109 @@ from datetime import datetime
 import io
 from typing import Dict, List, Tuple, Any
 import time
-import base64
 
 # Page config
 st.set_page_config(
-    page_title="Victora - User-Based SoD Conflict Analyzer", 
+    page_title="User-Based SoD Conflict Analyzer", 
     page_icon="👤", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-def load_logo():
-    """Load and encode the company logo"""
-    try:
-        with open("Victora logo.svg", "r", encoding="utf-8") as f:
-            svg_content = f.read()
-        # Encode SVG for embedding
-        b64_svg = base64.b64encode(svg_content.encode('utf-8')).decode('utf-8')
-        return f"data:image/svg+xml;base64,{b64_svg}"
-    except FileNotFoundError:
-        # Fallback if logo file is not found
-        return None
-
-def get_logo_html(logo_data):
-    """Generate HTML for logo display"""
-    if logo_data:
-        return f"""
-        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-            <img src="{logo_data}" style="height: 80px; margin-right: 20px;" alt="Victora Logo"/>
-        </div>
-        """
-    else:
-        return """
-        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-            <div style="height: 80px; width: 200px; background: linear-gradient(45deg, #667eea, #764ba2); 
-                        border-radius: 10px; display: flex; align-items: center; justify-content: center; 
-                        color: white; font-size: 24px; font-weight: bold; margin-right: 20px;">
-                VICTORA
-            </div>
-        </div>
-        """
-
-# Load company logo
-logo_data = load_logo()
-
-# Enhanced Custom CSS for attractive styling with company branding
+# Custom CSS for attractive styling
 st.markdown("""
 <style>
-    /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    /* Global Styles */
-    .main {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Company Header */
-    .company-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-        padding: 2.5rem;
-        border-radius: 20px;
+    .main-header {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 10px;
         color: white;
         text-align: center;
         margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        position: relative;
-        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
-    .company-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: pulse 4s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.1); opacity: 0.8; }
-    }
-    
-    .company-header h1 {
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        position: relative;
-        z-index: 1;
-    }
-    
-    .company-header p {
-        margin: 0.5rem 0 0 0;
-        font-size: 1.2rem;
-        font-weight: 400;
-        opacity: 0.95;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .company-branding {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1.5rem;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .company-branding img {
-        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-    }
-    
-    /* Enhanced Cards */
     .conflict-card {
         background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-        padding: 1.5rem;
-        border-radius: 15px;
+        padding: 1rem;
+        border-radius: 10px;
         color: white;
-        margin: 0.8rem 0;
-        box-shadow: 0 8px 25px rgba(238, 90, 36, 0.3);
-        border: 1px solid rgba(255,255,255,0.2);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .conflict-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 35px rgba(238, 90, 36, 0.4);
+        margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .success-card {
         background: linear-gradient(135deg, #00b894, #00cec9);
-        padding: 2rem;
-        border-radius: 15px;
+        padding: 1rem;
+        border-radius: 10px;
         color: white;
         text-align: center;
-        box-shadow: 0 8px 25px rgba(0, 184, 148, 0.3);
-        border: 1px solid rgba(255,255,255,0.2);
-        margin: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .info-card {
         background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-        padding: 1.5rem;
-        border-radius: 15px;
+        padding: 1rem;
+        border-radius: 10px;
         color: white;
-        margin: 0.8rem 0;
-        box-shadow: 0 8px 25px rgba(108, 92, 231, 0.3);
-        border: 1px solid rgba(255,255,255,0.2);
+        margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .user-card {
         background: linear-gradient(135deg, #fd79a8, #e84393);
-        padding: 1.5rem;
-        border-radius: 15px;
+        padding: 1rem;
+        border-radius: 10px;
         color: white;
-        margin: 0.8rem 0;
-        box-shadow: 0 8px 25px rgba(253, 121, 168, 0.3);
-        border: 1px solid rgba(255,255,255,0.2);
+        margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .metric-card {
-        background: linear-gradient(135deg, #ffffff, #f8f9fa);
-        padding: 2rem;
-        border-radius: 15px;
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
         text-align: center;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         border-left: 4px solid #667eea;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
-    .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 35px rgba(0,0,0,0.15);
-    }
-    
-    .metric-card h2 {
-        margin: 0 0 0.5rem 0;
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #667eea;
-    }
-    
-    .metric-card h4 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1.4rem;
-        font-weight: 600;
-    }
-    
-    .metric-card p {
-        margin: 0;
-        color: #6c757d;
-        font-weight: 500;
-    }
-    
-    /* Enhanced Buttons */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        padding: 0.8rem 2.5rem;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 1rem;
+        padding: 0.5rem 2rem;
+        border-radius: 25px;
+        font-weight: bold;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     
     .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    }
-    
-    .stButton > button:active {
-        transform: translateY(-1px);
-    }
-    
-    /* File Upload Area */
-    .upload-section {
-        background: linear-gradient(135deg, #f8f9ff, #e8f0fe);
-        border: 2px dashed #667eea;
-        border-radius: 20px;
-        padding: 2.5rem;
-        text-align: center;
-        margin: 1.5rem 0;
-        transition: all 0.3s ease;
-    }
-    
-    .upload-section:hover {
-        border-color: #764ba2;
-        background: linear-gradient(135deg, #f0f4ff, #e0ecfe);
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     
     .upload-area {
-        background: linear-gradient(135deg, #f9fbfd, #ffffff);
-        border: 2px dashed #4a90e2;
-        border-radius: 20px;
-        padding: 2.5rem;
-        text-align: left;
-        font-family: 'Inter', sans-serif;
-        color: #333;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        margin: 2rem 0;
-    }
-    
-    .upload-area h3 {
-        color: #2c3e50;
-        font-size: 1.8rem;
-        margin-bottom: 1rem;
-        font-weight: 600;
-    }
-    
-    .upload-area h4 {
-        margin-top: 1.5rem;
-        font-size: 1.3rem;
-        color: #34495e;
-        font-weight: 500;
-    }
-    
-    .upload-area p {
-        font-size: 1rem;
-        margin: 0.8rem 0;
-        line-height: 1.6;
-        color: #5a6c7d;
-    }
-    
-    .upload-area code {
-        background: linear-gradient(135deg, #eef2f7, #f8fafc);
-        padding: 4px 8px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        color: #667eea;
-        border: 1px solid #e1e8ed;
-    }
-    
-    .upload-area strong {
-        color: #e74c3c;
-        font-weight: 600;
-    }
-    
-    /* Tab Content */
-    .tab-content {
-        background: linear-gradient(135deg, #ffffff, #f8f9fa);
-        padding: 2.5rem;
-        border-radius: 20px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-        margin-top: 1.5rem;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-    }
-    
-    /* Progress Bar Styling */
-    .stProgress .st-bo {
-        background: linear-gradient(90deg, #667eea, #764ba2);
+        border: 2px dashed #667eea;
         border-radius: 10px;
-    }
-    
-    /* Dataframe Styling */
-    .stDataFrame {
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-    
-    /* Sidebar Styling */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #667eea, #764ba2);
-    }
-    
-    /* Footer Styling */
-    .company-footer {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
         padding: 2rem;
-        border-radius: 20px;
-        color: white;
         text-align: center;
-        margin-top: 3rem;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        background: linear-gradient(135deg, #f8f9ff, #e8f0fe);
+        margin: 1rem 0;
     }
     
-    .company-footer h4 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
-    
-    .company-footer p {
-        margin: 0.5rem 0;
-        opacity: 0.9;
-    }
-    
-    .company-footer small {
-        opacity: 0.8;
-        font-size: 0.9rem;
+    .tab-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        margin-top: 1rem;
     }
 
     /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
-    
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .company-header h1 {
-            font-size: 2rem;
-        }
-        
-        .company-header p {
-            font-size: 1rem;
-        }
-        
-        .metric-card {
-            padding: 1.5rem;
-        }
-        
-        .tab-content {
-            padding: 1.5rem;
-        }
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -702,4 +439,531 @@ def create_user_summary(conflicts_df, user_tcodes_df):
                 "user_name": user_name,
                 "roles": ", ".join(roles),
                 "total_roles": len(roles),
-                "total_tcodes
+                "total_tcodes": len(tcodes),
+                "conflict_count": conflict_count,
+                "risk_status": "HIGH RISK" if conflict_count > 0 else "SAFE"
+            })
+        return pd.DataFrame(summary)
+    except Exception as e:
+        st.error(f"Error creating user summary: {str(e)}")
+        return pd.DataFrame()
+
+def create_excel_report(conflicts_df, user_summary_df, user_tcodes_df, function_map_df, risk_pairs_df):
+    """Create comprehensive Excel report"""
+    try:
+        output = io.BytesIO()
+        
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            if not user_summary_df.empty:
+                user_summary_df.to_excel(writer, sheet_name="User_Summary", index=False)
+            if not conflicts_df.empty:
+                conflicts_df.to_excel(writer, sheet_name="User_Conflicts", index=False)
+            else:
+                pd.DataFrame({"Message": ["No conflicts found"]}).to_excel(writer, sheet_name="User_Conflicts", index=False)
+            if not user_tcodes_df.empty:
+                user_tcodes_df.to_excel(writer, sheet_name="User_Role_Tcodes", index=False)
+            if not function_map_df.empty:
+                function_map_df.to_excel(writer, sheet_name="Function_Tcodes", index=False)
+            if not risk_pairs_df.empty:
+                risk_pairs_df.to_excel(writer, sheet_name="Risk_Pairs", index=False)
+
+        output.seek(0)
+        return output.read()
+    except Exception as e:
+        st.error(f"Error creating Excel report: {str(e)}")
+        return None
+
+# Initialize session state
+if "processed_data" not in st.session_state:
+    st.session_state.processed_data = {}
+
+# Main Application
+def main():
+    # Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>👤 User-Based SoD Conflict Analyzer</h1>
+        <p>Upload your files to analyze Segregation of Duties conflicts</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # File upload section
+    st.markdown("## 📁 Upload Required Files")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("### 👥 User Data File")
+        user_file = st.file_uploader(
+            "Upload User Data",
+            type=['csv', 'xlsx', 'xls'],
+            help="File containing user information and role assignments",
+            key="user_file_uploader"
+        )
+    
+    with col2:
+        st.markdown("### 🔗 Role Mapping File")
+        roles_file = st.file_uploader(
+            "Upload Role-Tcode Mapping",
+            type=['xlsx', 'xls'],
+            help="File containing role to T-code mappings",
+            key="roles_file_uploader"
+        )
+    
+    with col3:
+        st.markdown("### ⚠️ Risk Configuration File")
+        risk_file = st.file_uploader(
+            "Upload Risk/Function Data",
+            type=['xlsx', 'xls'],
+            help="File containing function mappings and risk definitions",
+            key="risk_file_uploader"
+        )
+    
+    # Process files when all uploaded
+    if user_file and roles_file and risk_file:
+        
+        if st.button("🚀 Process Files & Load Data", type="primary", use_container_width=True):
+            with st.spinner("Processing uploaded files..."):
+                progress_bar = st.progress(0)
+                
+                try:
+                    # Load user data
+                    progress_bar.progress(20)
+                    user_data = load_user_data_from_upload(user_file)
+                    if user_data is None:
+                        st.stop()
+                    
+                    # Load role mappings
+                    progress_bar.progress(40)
+                    role_tcodes = load_role_tcode_mapping_from_upload(roles_file)
+                    if role_tcodes is None or role_tcodes.empty:
+                        st.stop()
+                    
+                    # Extract user roles
+                    progress_bar.progress(60)
+                    user_roles = load_user_role_assignments_from_upload(user_data)
+                    if user_roles.empty:
+                        st.error("No user-role assignments found")
+                        st.stop()
+                    
+                    # Create user-tcode mapping
+                    progress_bar.progress(70)
+                    user_tcodes = create_user_tcode_mapping(user_roles, role_tcodes)
+                    if user_tcodes.empty:
+                        st.warning("No matching roles found between user data and role mappings")
+                        st.stop()
+                    
+                    # Load risk data
+                    progress_bar.progress(80)
+                    function_map, risk_pairs = load_risk_data_from_upload(risk_file)
+                    if function_map is None or risk_pairs is None:
+                        st.stop()
+                    
+                    # Store processed data
+                    progress_bar.progress(100)
+                    st.session_state.processed_data = {
+                        'user_data': user_data,
+                        'user_roles': user_roles,
+                        'role_tcodes': role_tcodes,
+                        'user_tcodes': user_tcodes,
+                        'function_map': function_map,
+                        'risk_pairs': risk_pairs
+                    }
+                    
+                    st.success("✅ All files processed successfully!")
+                    
+                except Exception as e:
+                    st.error(f"Error processing files: {str(e)}")
+                    st.stop()
+    
+    # Show analysis interface if data is processed
+    if st.session_state.processed_data:
+        data = st.session_state.processed_data
+        
+        # Show statistics
+        st.markdown("---")
+        st.markdown("### 📊 Data Statistics")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            total_users = len(data['user_tcodes']['user_id'].unique())
+            st.markdown(f"""
+            <div class="metric-card">
+                <h2>{total_users}</h2>
+                <p>Total Users</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            total_roles = len(data['user_tcodes']['role'].unique())
+            st.markdown(f"""
+            <div class="metric-card">
+                <h2>{total_roles}</h2>
+                <p>Total Roles</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            total_tcodes = len(data['user_tcodes']['tcode'].unique())
+            st.markdown(f"""
+            <div class="metric-card">
+                <h2>{total_tcodes}</h2>
+                <p>Total T-Codes</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            total_risks = len(data['risk_pairs']['risk_id'].unique())
+            st.markdown(f"""
+            <div class="metric-card">
+                <h2>{total_risks}</h2>
+                <p>Risk Types</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Analysis tabs
+        st.markdown("---")
+        tab1, tab2 = st.tabs(["🔍 Individual User Analysis", "📊 Bulk Analysis & Reports"])
+        
+        # Individual User Analysis Tab
+        with tab1:
+            st.markdown('<div class="tab-content">', unsafe_allow_html=True)
+            
+            st.markdown("### 🎯 Select User to Analyze")
+            
+            # Show available users
+            available_users = sorted(data["user_tcodes"]["user_id"].unique())
+            
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                # Option 1: Dropdown selection
+                user_input = st.selectbox(
+                    "Choose from Available Users",
+                    options=[""] + available_users,
+                    help=f"Select from {len(available_users)} available users to check for conflicts",
+                    key="user_selector"
+                )
+                
+                st.markdown("**OR**")
+                
+                # Option 2: Manual text input
+                manual_user = st.text_input(
+                    "Type User ID Manually",
+                    placeholder="Enter user ID...",
+                    help="Type any user ID to analyze",
+                    key="manual_user_input"
+                )
+            
+            with col2:
+                # Use manual input if provided, otherwise use dropdown
+                final_user = manual_user.strip() if manual_user.strip() else user_input
+                
+                # Show quick stats for selected user
+                if final_user:
+                    user_data_quick = data["user_tcodes"][data["user_tcodes"]["user_id"] == final_user]
+                    if not user_data_quick.empty:
+                        user_name = user_data_quick["user_name"].iloc[0]
+                        user_roles_list = list(user_data_quick["role"].unique())
+                        user_tcodes_list = list(user_data_quick["tcode"].unique())
+                        user_functions = user_data_quick.merge(data['function_map'], on='tcode', how='inner')['function_id'].unique()
+                        
+                        st.markdown(f"""
+                        <div class="user-card">
+                            <h4>👤 {user_name} ({final_user})</h4>
+                            <p>• Roles: {len(user_roles_list)}</p>
+                            <p>• T-Codes: {len(user_tcodes_list)}</p>
+                            <p>• Functions: {len(user_functions)}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                        <div style='background: #fff3cd; padding: 1rem; border-radius: 8px; border-left: 4px solid #ffc107;'>
+                            <h4>⚠️ User Not Found</h4>
+                            <p>User ID '{final_user}' not found in uploaded data</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            
+            # Automatically analyze user when selected
+            if final_user and final_user != "":
+                user_analysis = analyze_user_conflicts(final_user, data['user_tcodes'], data['function_map'], data['risk_pairs'])
+                
+                st.markdown("---")
+                
+                # User info header
+                st.markdown(f"""
+                <div class="info-card">
+                    <h3>👤 User: {user_analysis.get('user_name', 'Unknown')} ({user_analysis['user_id']})</h3>
+                    <p>Roles: {len(user_analysis['roles'])} | Functions: {len(user_analysis['functions'])} | T-Codes: {len(user_analysis['tcodes'])} | Conflicts: {user_analysis['conflict_count']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Show error if any
+                if 'error' in user_analysis:
+                    st.warning(user_analysis['error'])
+                else:
+                    # Metrics row
+                    col1, col2, col3, col4, col5 = st.columns(5)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h2>{len(user_analysis['roles'])}</h2>
+                            <p>Roles</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h2>{len(user_analysis['functions'])}</h2>
+                            <p>Functions</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h2>{len(user_analysis['tcodes'])}</h2>
+                            <p>T-Codes</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col4:
+                        color = "#e74c3c" if user_analysis['conflict_count'] > 0 else "#27ae60"
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h2 style="color: {color}">{user_analysis['conflict_count']}</h2>
+                            <p>Conflicts</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col5:
+                        status = "HIGH RISK" if user_analysis['conflict_count'] > 0 else "SAFE"
+                        color = "#e74c3c" if user_analysis['conflict_count'] > 0 else "#27ae60"
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h4 style="color: {color}">{status}</h4>
+                            <p>Status</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    
+                    # Detailed view
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.markdown("### 👔 Roles")
+                        if user_analysis['roles']:
+                            for role in user_analysis['roles']:
+                                st.markdown(f"• `{role}`")
+                        else:
+                            st.info("No roles found for this user")
+                    
+                    with col2:
+                        st.markdown("### 📋 Functions")
+                        if user_analysis['functions']:
+                            for func in user_analysis['functions']:
+                                st.markdown(f"• `{func}`")
+                        else:
+                            st.info("No functions found for this user")
+                    
+                    with col3:
+                        st.markdown("### 💻 T-Codes")
+                        if user_analysis['tcodes']:
+                            # Show first 10 tcodes, with option to show more
+                            for tcode in user_analysis['tcodes'][:10]:
+                                st.markdown(f"• `{tcode}`")
+                            if len(user_analysis['tcodes']) > 10:
+                                st.markdown(f"... and {len(user_analysis['tcodes']) - 10} more")
+                        else:
+                            st.info("No T-codes found for this user")
+                    
+                    # Conflicts section
+                    if user_analysis['conflicts']:
+                        st.markdown("### ⚠️ Detected Conflicts")
+                        for i, conflict in enumerate(user_analysis['conflicts'], 1):
+                            st.markdown(f"""
+                            <div class="conflict-card">
+                                <h4>Conflict #{i}: {conflict.get('type', 'SoD Violation')}</h4>
+                                <p><strong>{conflict.get('function_1', 'N/A')}</strong> ↔️ <strong>{conflict.get('function_2', 'N/A')}</strong></p>
+                                <p>{conflict.get('description', 'Segregation of Duties conflict detected')}</p>
+                                <small>
+                                    Roles: {conflict.get('role_1', 'N/A')} ↔️ {conflict.get('role_2', 'N/A')}<br>
+                                    T-Codes: {conflict.get('tcode_1', 'N/A')} ↔️ {conflict.get('tcode_2', 'N/A')}
+                                </small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.markdown("""
+                        <div class="success-card">
+                            <h3>🎉 No Conflicts Found!</h3>
+                            <p>This user appears to have proper segregation of duties</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Bulk Analysis Tab
+        with tab2:
+            st.markdown('<div class="tab-content">', unsafe_allow_html=True)
+            
+            st.markdown("### 📊 System-Wide Conflict Analysis")
+            
+            if st.button("🚀 Analyze All Users for Conflicts", type="primary", use_container_width=True):
+                with st.spinner("🔄 Analyzing all users for conflicts..."):
+                    progress_bar = st.progress(0)
+                    
+                    try:
+                        # Analyze conflicts for all users
+                        conflicts_df = analyze_conflicts(data['user_tcodes'], data['function_map'], data['risk_pairs'])
+                        progress_bar.progress(100)
+                        
+                        st.session_state['bulk_conflicts'] = conflicts_df
+                        
+                    except Exception as e:
+                        st.error(f"Error during bulk analysis: {str(e)}")
+            
+            # Show bulk analysis results
+            if 'bulk_conflicts' in st.session_state:
+                conflicts_df = st.session_state['bulk_conflicts']
+                
+                st.markdown("---")
+                
+                if not conflicts_df.empty:
+                    # Results summary
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h2 style="color: #e74c3c">{len(conflicts_df)}</h2>
+                            <p>Total Conflicts</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        unique_users = conflicts_df['user_id'].nunique()
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h2>{unique_users}</h2>
+                            <p>Affected Users</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        unique_risks = conflicts_df['risk_id'].nunique()
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h2 style="color: #e74c3c">{unique_risks}</h2>
+                            <p>Risk Types</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Show conflicts table
+                    st.markdown("#### 📋 All Detected Conflicts")
+                    st.dataframe(conflicts_df, use_container_width=True)
+                    
+                    # Create user summary
+                    user_summary_df = create_user_summary(conflicts_df, data['user_tcodes'])
+                    
+                    if not user_summary_df.empty:
+                        st.markdown("#### 👥 User Summary")
+                        st.dataframe(user_summary_df, use_container_width=True)
+                    
+                    # Download button
+                    excel_data = create_excel_report(conflicts_df, user_summary_df, data['user_tcodes'], data['function_map'], data['risk_pairs'])
+                    
+                    if excel_data:
+                        filename = f"User_Conflict_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+                        
+                        st.download_button(
+                            label="📥 Download Complete Conflict Report (Excel)",
+                            data=excel_data,
+                            file_name=filename,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True
+                        )
+                    
+                    # Show first 10 conflicts in detail
+                    if len(conflicts_df) > 0:
+                        st.markdown("#### ⚠️ Conflict Details (First 10)")
+                        for i, (_, conflict) in enumerate(conflicts_df.head(10).iterrows(), 1):
+                            st.markdown(f"""
+                            <div class="conflict-card">
+                                <h4>#{i} User: {conflict['user_name']} ({conflict['user_id']})</h4>
+                                <p><strong>Risk:</strong> {conflict['risk_id']}</p>
+                                <p><strong>Conflicting Functions:</strong> {conflict['function_1']} ↔️ {conflict['function_2']}</p>
+                                <p><strong>Through Roles:</strong> {conflict['role_1']} ↔️ {conflict['role_2']}</p>
+                                <p><strong>T-Codes:</strong> {conflict['user_tcode_f1']} ↔️ {conflict['user_tcode_f2']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        if len(conflicts_df) > 10:
+                            st.info(f"Showing first 10 conflicts. Total conflicts: {len(conflicts_df)}. Download the Excel report for complete details.")
+                
+                else:
+                    st.markdown("""
+                    <div class="success-card">
+                        <h2>🎉 No Conflicts Found!</h2>
+                        <p>All users show proper segregation of duties</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Create user summary even if no conflicts
+                    user_summary_df = create_user_summary(pd.DataFrame(), data['user_tcodes'])
+                    
+                    if not user_summary_df.empty:
+                        st.markdown("#### 👥 User Summary")
+                        st.dataframe(user_summary_df, use_container_width=True)
+                    
+                    # Download clean report
+                    excel_data = create_excel_report(pd.DataFrame(), user_summary_df, data['user_tcodes'], data['function_map'], data['risk_pairs'])
+                    
+                    if excel_data:
+                        filename = f"Clean_User_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+                        
+                        st.download_button(
+                            label="📥 Download Clean Report (Excel)",
+                            data=excel_data,
+                            file_name=filename,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True
+                        )
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+    
+    else:
+        # Instructions when no files are uploaded
+        st.markdown("---")
+        st.markdown("""
+        <div class="upload-area">
+            <h3>📋 Getting Started</h3>
+            <p>To begin analyzing SoD conflicts, please upload all three required files:</p>
+            
+            <h4>1. 👥 User Data File (CSV/Excel)</h4>
+            <p>Should contain columns like: <code>user_id</code>, <code>user_name</code>, <code>role1</code>, <code>role2</code>, etc.</p>
+            
+            <h4>2. 🔗 Role Mapping File (Excel)</h4>
+            <p>Should have sheets with role-to-T-code mappings</p>
+            
+            <h4>3. ⚠️ Risk Configuration File (Excel)</h4>
+            <p>Should contain "Function T-Code Mapping" and "Risk Function Mapping" sheets</p>
+            
+            <p><strong>Once all files are uploaded, click "Process Files & Load Data" to begin analysis.</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; padding: 2rem; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; margin-top: 2rem;'>
+        <h4>👤 User-Based SoD Conflict Analyzer</h4>
+        <p>Comprehensive segregation of duties analysis for your organization</p>
+        <small>Upload your files to detect potential security risks and compliance violations</small>
+    </div>
+    """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
