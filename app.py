@@ -937,23 +937,61 @@ def main():
     else:
         # Instructions when no files are uploaded
         st.markdown("---")
-        st.markdown("""
-        <div class="upload-area">
-            <h3>📋 Getting Started</h3>
-            <p>To begin analyzing SoD conflicts, please upload all three required files:</p>
-            
-            <h4>1. 👥 User Data File (CSV/Excel)</h4>
-            <p>Should contain columns like: <code>user_id</code>, <code>user_name</code>, <code>role1</code>, <code>role2</code>, etc.</p>
-            
-            <h4>2. 🔗 Role Mapping File (Excel)</h4>
-            <p>Should have sheets with role-to-T-code mappings</p>
-            
-            <h4>3. ⚠️ Risk Configuration File (Excel)</h4>
-            <p>Should contain "Function T-Code Mapping" and "Risk Function Mapping" sheets</p>
-            
-            <p><strong>Once all files are uploaded, click "Process Files & Load Data" to begin analysis.</strong></p>
-        </div>
-        """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+.upload-area {
+    background: #f9fbfd;
+    border: 2px dashed #4a90e2;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: left;
+    font-family: "Segoe UI", sans-serif;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.upload-area h3 {
+    color: #2c3e50;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+.upload-area h4 {
+    margin-top: 18px;
+    font-size: 18px;
+    color: #34495e;
+}
+.upload-area p {
+    font-size: 15px;
+    margin: 5px 0 10px 0;
+    line-height: 1.6;
+}
+.upload-area code {
+    background: #eef2f7;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+.upload-area strong {
+    color: #e74c3c;
+}
+</style>
+
+<div class="upload-area">
+    <h3>📋 Getting Started</h3>
+    <p>To begin analyzing <strong>SoD conflicts</strong>, please upload all three required files:</p>
+    
+    <h4>1. 👥 User Data File (CSV/Excel)</h4>
+    <p>Should contain columns like: <code>user_id</code>, <code>user_name</code>, <code>role1</code>, <code>role2</code>, etc.</p>
+    
+    <h4>2. 🔗 Role Mapping File (Excel)</h4>
+    <p>Should have sheets with <em>role-to-T-code mappings</em>.</p>
+    
+    <h4>3. ⚠️ Risk Configuration File (Excel)</h4>
+    <p>Should contain <code>Function T-Code Mapping</code> and <code>Risk Function Mapping</code> sheets.</p>
+    
+    <p><strong>Once all files are uploaded, click "Process Files & Load Data" to begin analysis.</strong></p>
+</div>
+""", unsafe_allow_html=True)
+
     
     # Footer
     st.markdown("---")
@@ -966,4 +1004,5 @@ def main():
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
+
     main()
