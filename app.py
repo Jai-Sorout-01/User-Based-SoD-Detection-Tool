@@ -994,7 +994,7 @@ st.markdown("""
 
     
     # Footer
-    st.markdown("---")
+        st.markdown("---")
     st.markdown("""
     <div style='text-align: center; padding: 2rem; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; margin-top: 2rem;'>
         <h4>👤 User-Based SoD Conflict Analyzer</h4>
@@ -1006,3 +1006,4 @@ st.markdown("""
 if __name__ == "__main__":
 
     main()
+
