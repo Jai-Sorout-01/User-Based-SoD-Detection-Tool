@@ -123,7 +123,7 @@ def load_user_data_from_upload(user_file):
             user_data = pd.read_csv(user_file)
         else:
             # Handle Excel files
-            excel_file = pd.ExcelFile(user_file)
+            excel_file = pd.read_excel(user_file,engine="openpyxl")
             sheet_names = excel_file.sheet_names
             
             # Let user choose sheet if multiple sheets
@@ -968,4 +968,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
