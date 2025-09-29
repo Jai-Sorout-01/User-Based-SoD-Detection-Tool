@@ -121,27 +121,21 @@ def load_user_data_from_upload(user_file):
         if user_file.name.endswith('.csv'):
             user_data = pd.read_csv(user_file)
         else:
-            # Handle Excel files
-            excel_file = pd.ExcelFile(user_file)
-            sheet_names = excel_file.sheet_names
-            
-            # Let user choose sheet if multiple sheets
-            if len(sheet_names) > 1:
-                sheet_name = st.selectbox(
-                    "Select User Data Sheet:",
-                    options=sheet_names,
-                    help="Choose which sheet contains user data",
-                    key="user_sheet_selector"
-                )
-            else:
-                sheet_name = sheet_names[0]
-            
-            user_data = pd.read_excel(user_file, sheet_name=sheet_name)
+            # Handle Excel files - read with xlrd engine for .xls files
+            try:
+                user_data = pd.read_excel(user_file, engine='openpyxl')
+            except:
+                try:
+                    user_data = pd.read_excel(user_file, engine='xlrd')
+                except:
+                    st.error("Unable to read Excel file. Please ensure openpyxl is installed: pip install openpyxl")
+                    return None
         
         user_data.columns = [normalize_colname(c) for c in user_data.columns]
         return user_data
     except Exception as e:
         st.error(f"Error loading user data: {str(e)}")
+        st.info("If you're getting an 'openpyxl' error, please add this to your requirements.txt file:\nopenpyxl>=3.0.0")
         return None
 
 def load_role_tcode_mapping_from_upload(roles_file):
@@ -149,7 +143,16 @@ def load_role_tcode_mapping_from_upload(roles_file):
     try:
         possible_sheets = ["Role Tcode Mapping", "Role Tcode Mapping_New", "User Mapping"]
         role_tcode_data = []
-        excel_file = pd.ExcelFile(roles_file)
+        
+        try:
+            excel_file = pd.ExcelFile(roles_file, engine='openpyxl')
+        except:
+            try:
+                excel_file = pd.ExcelFile(roles_file, engine='xlrd')
+            except:
+                st.error("Unable to read Excel file. Please ensure openpyxl is installed.")
+                return None
+        
         available_sheets = excel_file.sheet_names
         
         # Let user select relevant sheets
@@ -202,6 +205,7 @@ def load_role_tcode_mapping_from_upload(roles_file):
         return pd.DataFrame()
     except Exception as e:
         st.error(f"Error loading role mapping: {str(e)}")
+        st.info("If you're getting an 'openpyxl' error, please add this to your requirements.txt file:\nopenpyxl>=3.0.0")
         return None
 
 def load_user_role_assignments_from_upload(user_data):
@@ -319,6 +323,7 @@ def load_risk_data_from_upload(risk_file):
         return function_map_expanded, risk_pairs_df
     except Exception as e:
         st.error(f"Error loading risk data: {str(e)}")
+        st.info("If you're getting an 'openpyxl' error, please add this to your requirements.txt file:\nopenpyxl>=3.0.0")
         return None, None
 
 def analyze_conflicts(user_tcodes, function_map, risk_pairs):
@@ -471,6 +476,7 @@ def create_excel_report(conflicts_df, user_summary_df, user_tcodes_df, function_
         return output.read()
     except Exception as e:
         st.error(f"Error creating Excel report: {str(e)}")
+        st.info("If you're getting an 'openpyxl' error, please add this to your requirements.txt file:\nopenpyxl>=3.0.0")
         return None
 
 # Initialize session state
@@ -486,6 +492,23 @@ def main():
         <p>Upload your files to analyze Segregation of Duties conflicts</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Show installation note if needed
+    with st.expander("📦 Installation Requirements"):
+        st.markdown("""
+        **Required Python packages:**
+        
+        Create a `requirements.txt` file with:
+        ```
+        streamlit>=1.28.0
+        pandas>=2.0.0
+        numpy>=1.24.0
+        openpyxl>=3.0.0
+        xlrd>=2.0.0
+        ```
+        
+        Install with: `pip install -r requirements.txt`
+        """)
     
     # File upload section
     st.markdown("## 📁 Upload Required Files")
@@ -967,5 +990,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
